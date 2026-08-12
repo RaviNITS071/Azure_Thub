@@ -5,12 +5,19 @@ const tenderSchema = new mongoose.Schema({
   description: { type: String },
   sourcePortal: { type: String, required: true },
   sourceTenderId: { type: String, required: true },
+  referenceNo: { type: String },
+  department: { type: String, index: true },
   state: { type: String, index: true },
   district: { type: String, index: true },
   category: { type: String, index: true },
-  closingDate: { type: Date, required: true, index: true },
+  closingDate: { type: Date, index: true },
   publishedDate: { type: Date },
-  estimatedValue: { type: Number }
+  openingDate: { type: Date },
+  estimatedValue: { type: Number },
+  location: { type: String, default: 'Jammu and Kashmir' },
+  detailsUrl: { type: String },       // Red hyperlink wala detailed page URL
+  organisationChain: { type: String }, // Raw organization chain string
+  applicationLink: { type: String },
 }, { timestamps: true });
 
 // Required compound indexes for deduplication and matching/filtering

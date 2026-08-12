@@ -1,13 +1,9 @@
 import { Worker } from 'bullmq';
 import pino from 'pino';
 import { env } from '../config/env.js';
-
-// Development: Import our Dummy Adapter
-import { DummyTenderAdapter } from '../services/adapters/DummyTenderAdapter.js';
-// Production: import { TenderbookAdapter } from '../services/adapters/TenderbookAdapter.js';
-
+import { JKTenderAdapter } from '../services/adapters/JKTenderAdapter.js';
 import SyncJob from '../models/SyncJob.js';
-import Tender from '../models/Tender.js'; // Important: Import the Tender model
+import Tender from '../models/Tender.js';
 
 const logger = pino();
 const connection = { host: new URL(env.REDIS_URL).hostname, port: new URL(env.REDIS_URL).port };
@@ -15,36 +11,40 @@ const connection = { host: new URL(env.REDIS_URL).hostname, port: new URL(env.RE
 export const tenderSyncWorker = new Worker('TenderQueue', async (job) => {
   logger.info(`Processing Tender Sync Job: ${job.id}`);
   
-  // Use development adapter
-  const adapter = new DummyTenderAdapter();
-  
+  const adapter = new JKTenderAdapter();
   const syncRecord = await SyncJob.create({ sourcePortal: adapter.portalName });
+  let newFound = 0;
 
-  try {
-    const rawTenders = await adapter.fetchList();
-    let newFound = 0;
-
-    for (const raw of rawTenders) {
+  // --- CALLBACK TO SAVE DATA PAGE-BY-PAGE ---
+  const savePageToDb = async (pageData) => {
+    logger.info(`[Worker] Saving ${pageData.length} tenders from current page to DB...`);
+    
+    for (const raw of pageData) {
       const normalized = adapter.normalize(raw);
 
-      // Upsert Logic: Prevent duplicates by checking sourcePortal + sourceTenderId
+      // Upsert logic with error handling for duplicates
       const result = await Tender.updateOne(
         { sourcePortal: normalized.sourcePortal, sourceTenderId: normalized.sourceTenderId },
         { $set: normalized },
         { upsert: true }
       );
 
-      // If a new tender was inserted, increment our counter
       if (result.upsertedCount > 0) {
         newFound++;
       }
     }
+  };
+
+  try {
+    // Run the scraper passing the callback
+    // Mode is set to 'FULL' as per your requirement to fetch all 797 pages
+    await adapter.fetchList(1, { syncMode: 'FULL' }, savePageToDb);
 
     syncRecord.status = 'completed';
     syncRecord.newTendersFound = newFound;
     await syncRecord.save();
     
-    logger.info(`Sync complete. Found ${newFound} new tenders.`);
+    logger.info(`Sync complete. Total new tenders added: ${newFound}`);
 
   } catch (error) {
     logger.error(`Sync Job Failed: ${error.message}`);
