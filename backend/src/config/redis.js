@@ -4,12 +4,20 @@ import { env } from './env.js';
 
 const logger = pino();
 
-export const redis = new Redis(env.REDIS_URL, {
-  maxRetriesPerRequest: null, // Critical requirement for BullMQ
+// Automatically force 'rediss://' for secure cloud redis (like Upstash) if not running locally
+let connectionUrl = env.REDIS_URL;
+if (connectionUrl && !connectionUrl.includes('localhost') && !connectionUrl.includes('127.0.0.1')) {
+  if (connectionUrl.startsWith('redis://')) {
+    connectionUrl = connectionUrl.replace('redis://', 'rediss://');
+  }
+}
+
+export const redis = new Redis(connectionUrl, {
+  maxRetriesPerRequest: null, // Critical for BullMQ
   tls: {
-    rejectUnauthorized: false // Required for secure Upstash cloud connections
+    rejectUnauthorized: false // Required for Upstash SSL verification
   },
-  keepAlive: 30000, // Sends periodic packets to prevent Render from dropping the TCP connection
+  keepAlive: 30000, // Keeps TCP socket active to prevent Render drops
   retryStrategy(times) {
     const delay = Math.min(times * 50, 2000);
     return delay;
