@@ -1,11 +1,10 @@
 import axios from 'axios';
 
 /**
- * API_BASE_URL points to the backend server.
- * This exactly matches the port (8000) and the versioned base path (/api/v1)
- * defined in your backend's app.js file.
+ * API_BASE_URL dynamically switches between the live Render backend URL 
+ * in production and localhost during local development.
  */
-const API_BASE_URL = 'http://localhost:8000/api/v1'; 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'; 
 
 /**
  * Create a centralized Axios instance.
