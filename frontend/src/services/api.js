@@ -4,7 +4,7 @@ import axios from 'axios';
  * API_BASE_URL dynamically switches between the live Render backend URL 
  * in production and localhost during local development.
  */
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'; 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "tenderhub-backend-hag2eja2d5brfzgg.centralindia-01.azurewebsites.net" || 'http://localhost:8000/api/v1';
 
 /**
  * Create a centralized Axios instance.
@@ -25,11 +25,11 @@ export const api = axios.create({
  */
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  
+
   return config;
 }, (error) => {
   return Promise.reject(error);
