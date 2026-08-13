@@ -9,4 +9,7 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
+  build: {
+    cssMinify: 'esbuild', // Forces esbuild to handle modern CSS functions like --spacing() without crashing
+  },
 })
