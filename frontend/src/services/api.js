@@ -4,7 +4,11 @@ import axios from 'axios';
  * API_BASE_URL dynamically switches between the live Render backend URL 
  * in production and localhost during local development.
  */
-const API_BASE_URL = import.meta.env.VITE_API_URL || "tenderhub-backend-hag2eja2d5brfzgg.centralindia-01.azurewebsites.net" || 'http://localhost:8000/api/v1';
+/**
+ * API_BASE_URL dynamically switches between the live Render backend URL 
+ * in production and localhost during local development.
+ */
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://tenderhub-backend-hag2eja2d5brfzgg.centralindia-01.azurewebsites.net" || 'http://localhost:8000/api/v1';
 
 /**
  * Create a centralized Axios instance.
